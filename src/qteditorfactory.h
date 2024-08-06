@@ -54,7 +54,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtSpinBoxFactory : public QtAbstractEditorFact
     Q_OBJECT
 public:
     QtSpinBoxFactory(QObject *parent = 0);
-    ~QtSpinBoxFactory();
+    virtual ~QtSpinBoxFactory();
 protected:
     void connectPropertyManager(QtIntPropertyManager *manager);
     QWidget *createEditor(QtIntPropertyManager *manager, QtProperty *property,
@@ -78,7 +78,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtSliderFactory : public QtAbstractEditorFacto
     Q_OBJECT
 public:
     QtSliderFactory(QObject *parent = 0);
-    ~QtSliderFactory();
+    virtual ~QtSliderFactory();
 protected:
     void connectPropertyManager(QtIntPropertyManager *manager);
     QWidget *createEditor(QtIntPropertyManager *manager, QtProperty *property,
@@ -102,7 +102,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtScrollBarFactory : public QtAbstractEditorFa
     Q_OBJECT
 public:
     QtScrollBarFactory(QObject *parent = 0);
-    ~QtScrollBarFactory();
+    virtual ~QtScrollBarFactory();
 protected:
     void connectPropertyManager(QtIntPropertyManager *manager);
     QWidget *createEditor(QtIntPropertyManager *manager, QtProperty *property,
@@ -126,7 +126,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtCheckBoxFactory : public QtAbstractEditorFac
     Q_OBJECT
 public:
     QtCheckBoxFactory(QObject *parent = 0);
-    ~QtCheckBoxFactory();
+    virtual ~QtCheckBoxFactory();
 protected:
     void connectPropertyManager(QtBoolPropertyManager *manager);
     QWidget *createEditor(QtBoolPropertyManager *manager, QtProperty *property,
@@ -148,7 +148,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtDoubleSpinBoxFactory : public QtAbstractEdit
     Q_OBJECT
 public:
     QtDoubleSpinBoxFactory(QObject *parent = 0);
-    ~QtDoubleSpinBoxFactory();
+    virtual ~QtDoubleSpinBoxFactory();
 protected:
     void connectPropertyManager(QtDoublePropertyManager *manager);
     QWidget *createEditor(QtDoublePropertyManager *manager, QtProperty *property,
@@ -173,7 +173,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtLineEditFactory : public QtAbstractEditorFac
     Q_OBJECT
 public:
     QtLineEditFactory(QObject *parent = 0);
-    ~QtLineEditFactory();
+    virtual ~QtLineEditFactory();
 protected:
     void connectPropertyManager(QtStringPropertyManager *manager);
     QWidget *createEditor(QtStringPropertyManager *manager, QtProperty *property,
@@ -185,7 +185,12 @@ private:
     Q_DISABLE_COPY(QtLineEditFactory)
     Q_PRIVATE_SLOT(d_func(), void slotPropertyChanged(QtProperty *, const QString &))
     Q_PRIVATE_SLOT(d_func(), void slotRegExpChanged(QtProperty *, const QRegExp &))
+#if QT_VERSION < 0x050000
+    Q_PRIVATE_SLOT(d_func(), void slotEchoModeChanged(QtProperty *, int))
+    Q_PRIVATE_SLOT(d_func(), void slotEditFinished())
+#else
     Q_PRIVATE_SLOT(d_func(), void slotSetValue(const QString &))
+#endif
     Q_PRIVATE_SLOT(d_func(), void slotEditorDestroyed(QObject *))
 };
 
@@ -196,7 +201,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtDateEditFactory : public QtAbstractEditorFac
     Q_OBJECT
 public:
     QtDateEditFactory(QObject *parent = 0);
-    ~QtDateEditFactory();
+    virtual ~QtDateEditFactory();
 protected:
     void connectPropertyManager(QtDatePropertyManager *manager);
     QWidget *createEditor(QtDatePropertyManager *manager, QtProperty *property,
@@ -220,7 +225,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtTimeEditFactory : public QtAbstractEditorFac
     Q_OBJECT
 public:
     QtTimeEditFactory(QObject *parent = 0);
-    ~QtTimeEditFactory();
+    virtual ~QtTimeEditFactory();
 protected:
     void connectPropertyManager(QtTimePropertyManager *manager);
     QWidget *createEditor(QtTimePropertyManager *manager, QtProperty *property,
@@ -242,7 +247,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtDateTimeEditFactory : public QtAbstractEdito
     Q_OBJECT
 public:
     QtDateTimeEditFactory(QObject *parent = 0);
-    ~QtDateTimeEditFactory();
+    virtual ~QtDateTimeEditFactory();
 protected:
     void connectPropertyManager(QtDateTimePropertyManager *manager);
     QWidget *createEditor(QtDateTimePropertyManager *manager, QtProperty *property,
@@ -264,7 +269,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtKeySequenceEditorFactory : public QtAbstract
     Q_OBJECT
 public:
     QtKeySequenceEditorFactory(QObject *parent = 0);
-    ~QtKeySequenceEditorFactory();
+    virtual ~QtKeySequenceEditorFactory();
 protected:
     void connectPropertyManager(QtKeySequencePropertyManager *manager);
     QWidget *createEditor(QtKeySequencePropertyManager *manager, QtProperty *property,
@@ -286,7 +291,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtCharEditorFactory : public QtAbstractEditorF
     Q_OBJECT
 public:
     QtCharEditorFactory(QObject *parent = 0);
-    ~QtCharEditorFactory();
+    virtual ~QtCharEditorFactory();
 protected:
     void connectPropertyManager(QtCharPropertyManager *manager);
     QWidget *createEditor(QtCharPropertyManager *manager, QtProperty *property,
@@ -308,7 +313,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtEnumEditorFactory : public QtAbstractEditorF
     Q_OBJECT
 public:
     QtEnumEditorFactory(QObject *parent = 0);
-    ~QtEnumEditorFactory();
+    virtual ~QtEnumEditorFactory();
 protected:
     void connectPropertyManager(QtEnumPropertyManager *manager);
     QWidget *createEditor(QtEnumPropertyManager *manager, QtProperty *property,
@@ -334,7 +339,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtCursorEditorFactory : public QtAbstractEdito
     Q_OBJECT
 public:
     QtCursorEditorFactory(QObject *parent = 0);
-    ~QtCursorEditorFactory();
+    virtual ~QtCursorEditorFactory();
 protected:
     void connectPropertyManager(QtCursorPropertyManager *manager);
     QWidget *createEditor(QtCursorPropertyManager *manager, QtProperty *property,
@@ -356,7 +361,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtColorEditorFactory : public QtAbstractEditor
     Q_OBJECT
 public:
     QtColorEditorFactory(QObject *parent = 0);
-    ~QtColorEditorFactory();
+    virtual ~QtColorEditorFactory();
 protected:
     void connectPropertyManager(QtColorPropertyManager *manager);
     QWidget *createEditor(QtColorPropertyManager *manager, QtProperty *property,
@@ -378,7 +383,7 @@ class QT_QTPROPERTYBROWSER_EXPORT QtFontEditorFactory : public QtAbstractEditorF
     Q_OBJECT
 public:
     QtFontEditorFactory(QObject *parent = 0);
-    ~QtFontEditorFactory();
+    virtual ~QtFontEditorFactory();
 protected:
     void connectPropertyManager(QtFontPropertyManager *manager);
     QWidget *createEditor(QtFontPropertyManager *manager, QtProperty *property,

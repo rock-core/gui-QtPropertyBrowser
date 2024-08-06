@@ -42,10 +42,18 @@
 #include <QtCore/QSet>
 #include <QtCore/QTimer>
 #include <QtCore/QMap>
+#if QT_VERSION < 0x050000
+#include <QtGui/QLabel>
+#include <QtGui/QGridLayout>
+#include <QtGui/QToolButton>
+#include <QtGui/QWidget>
+#include <QtGui/QStyle>
+#else
 #include <QGridLayout>
 #include <QLabel>
 #include <QToolButton>
 #include <QStyle>
+#endif
 
 #if QT_VERSION >= 0x040400
 QT_BEGIN_NAMESPACE
@@ -277,14 +285,11 @@ void QtButtonPropertyBrowserPrivate::propertyInserted(QtBrowserItem *index, QtBr
         if (!parentItem->container) {
             m_recreateQueue.removeAll(parentItem);
             WidgetItem *grandParent = parentItem->parent;
-            QWidget *w = 0;
             QGridLayout *l = 0;
             const int oldRow = gridRow(parentItem);
             if (grandParent) {
-                w = grandParent->container;
                 l = grandParent->layout;
             } else {
-                w = q_ptr;
                 l = m_mainLayout;
             }
             QFrame *container = new QFrame();

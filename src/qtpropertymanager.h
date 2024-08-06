@@ -174,15 +174,27 @@ public:
 
     QString value(const QtProperty *property) const;
     QRegExp regExp(const QtProperty *property) const;
+#if QT_VERSION < 0x050000
+    EchoMode echoMode(const QtProperty *property) const;
+#endif
 
 public Q_SLOTS:
     void setValue(QtProperty *property, const QString &val);
     void setRegExp(QtProperty *property, const QRegExp &regExp);
+#if QT_VERSION < 0x050000
+    void setEchoMode(QtProperty *property, EchoMode echoMode);
+#endif
 Q_SIGNALS:
     void valueChanged(QtProperty *property, const QString &val);
     void regExpChanged(QtProperty *property, const QRegExp &regExp);
+#if QT_VERSION < 0x050000
+    void echoModeChanged(QtProperty *property, const int);
+#endif
 protected:
     QString valueText(const QtProperty *property) const;
+#if QT_VERSION < 0x050000
+    QString displayText(const QtProperty *property) const;
+#endif
     virtual void initializeProperty(QtProperty *property);
     virtual void uninitializeProperty(QtProperty *property);
 private:
@@ -568,7 +580,11 @@ public:
 
 public Q_SLOTS:
     void setValue(QtProperty *property, int val);
+#if QT_VERSION < 0x050000
+    void setEnumNames(QtProperty *property, QStringList names);
+#else
     void setEnumNames(QtProperty *property, const QStringList &names);
+#endif
     void setEnumIcons(QtProperty *property, const QMap<int, QIcon> &icons);
 Q_SIGNALS:
     void valueChanged(QtProperty *property, int val);

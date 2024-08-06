@@ -41,7 +41,13 @@
 #ifndef QTPROPERTYBROWSER_H
 #define QTPROPERTYBROWSER_H
 
+#include <QtCore/QObject> /* for QT_VERSION */
+#if QT_VERSION < 0x050000
+#include <QtGui/QLineEdit>
+#include <QtGui/QWidget>
+#else
 #include <QWidget>
+#endif
 #include <QtCore/QSet>
 
 #if QT_VERSION >= 0x040400
@@ -64,6 +70,9 @@ QT_BEGIN_NAMESPACE
 #  define QT_QTPROPERTYBROWSER_EXPORT
 #endif
 
+#if QT_VERSION < 0x050000
+typedef QLineEdit::EchoMode EchoMode;
+#endif
 
 class QtAbstractPropertyManager;
 class QtPropertyPrivate;
@@ -81,25 +90,35 @@ public:
     QString statusTip() const;
     QString whatsThis() const;
     QString propertyName() const;
+#if QT_VERSION >= 0x050000
     QString propertyId() const;
+#endif
     bool isEnabled() const;
     bool isModified() const;
 
     bool hasValue() const;
     QIcon valueIcon() const;
     QString valueText() const;
+#if QT_VERSION < 0x050000
+    QString displayText() const;
+#else
 
     virtual bool compare(QtProperty* otherProperty)const;
+#endif
 
     void setToolTip(const QString &text);
     void setStatusTip(const QString &text);
     void setWhatsThis(const QString &text);
     void setPropertyName(const QString &text);
+#if QT_VERSION >= 0x050000
     void setPropertyId(const QString &text);
+#endif
     void setEnabled(bool enable);
     void setModified(bool modified);
 
+#if QT_VERSION >= 0x050000
     bool isSubProperty()const;
+#endif
     void addSubProperty(QtProperty *property);
     void insertSubProperty(QtProperty *property, QtProperty *afterProperty);
     void removeSubProperty(QtProperty *property);
@@ -125,7 +144,9 @@ public:
     void clear() const;
 
     QtProperty *addProperty(const QString &name = QString());
+#if QT_VERSION >= 0x050000
     QtProperty *qtProperty(const QString &id)const;
+#endif
 Q_SIGNALS:
 
     void propertyInserted(QtProperty *property,
@@ -137,6 +158,10 @@ protected:
     virtual bool hasValue(const QtProperty *property) const;
     virtual QIcon valueIcon(const QtProperty *property) const;
     virtual QString valueText(const QtProperty *property) const;
+#if QT_VERSION < 0x050000
+    virtual QString displayText(const QtProperty *property) const;
+    virtual EchoMode echoMode(const QtProperty *) const;
+#endif
     virtual void initializeProperty(QtProperty *property) = 0;
     virtual void uninitializeProperty(QtProperty *property);
     virtual QtProperty *createProperty();

@@ -17,11 +17,11 @@
 
 
 include(CMakeFindDependencyMacro)
-find_dependency(Qt5Widgets)
+find_dependency(Qt4 COMPONENTS QtGui)
 
 # Our library dependencies (contains definitions for IMPORTED targets)
-if(NOT TARGET QtPropertyBrowser)
-  include("${CMAKE_CURRENT_LIST_DIR}/QtPropertyBrowserTargets.cmake")
+if(NOT TARGET QtPropertyBrowser-qt4)
+  include("${CMAKE_CURRENT_LIST_DIR}/QtPropertyBrowser-qt4Targets.cmake")
 endif()
 
 # @PACKAGE_INIT@

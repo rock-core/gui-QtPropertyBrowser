@@ -63,7 +63,9 @@ public:
     int valueType() const;
     int propertyType() const;
 
+#if QT_VERSION >= 0x050000
     virtual bool compare(QtProperty* otherProperty)const;
+#endif
 
     void setValue(const QVariant &value);
     void setAttribute(const QString &attribute, const QVariant &value);
@@ -85,7 +87,9 @@ public:
 
     virtual QtVariantProperty *addProperty(int propertyType, const QString &name = QString());
 
+#if QT_VERSION >= 0x050000
     void setProperties(QSet<QtProperty *> properties);
+#endif
 
     int propertyType(const QtProperty *property) const;
     int valueType(const QtProperty *property) const;
@@ -130,6 +134,9 @@ private:
     Q_PRIVATE_SLOT(d_func(), void slotValueChanged(QtProperty *, bool))
     Q_PRIVATE_SLOT(d_func(), void slotValueChanged(QtProperty *, const QString &))
     Q_PRIVATE_SLOT(d_func(), void slotRegExpChanged(QtProperty *, const QRegExp &))
+#if QT_VERSION < 0x050000
+    Q_PRIVATE_SLOT(d_func(), void slotEchoModeChanged(QtProperty *, int))
+#endif
     Q_PRIVATE_SLOT(d_func(), void slotValueChanged(QtProperty *, const QDate &))
     Q_PRIVATE_SLOT(d_func(), void slotRangeChanged(QtProperty *, const QDate &, const QDate &))
     Q_PRIVATE_SLOT(d_func(), void slotValueChanged(QtProperty *, const QTime &))
@@ -173,7 +180,9 @@ protected:
     void connectPropertyManager(QtVariantPropertyManager *manager);
     QWidget *createEditor(QtVariantPropertyManager *manager, QtProperty *property,
                 QWidget *parent);
+#if QT_VERSION >= 0x050000
     QWidget *createEditor(QtProperty *property, QWidget *parent);
+#endif
     void disconnectPropertyManager(QtVariantPropertyManager *manager);
 private:
     QtVariantEditorFactoryPrivate *d_ptr;

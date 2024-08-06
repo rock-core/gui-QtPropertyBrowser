@@ -1,0 +1,18 @@
+<package>
+    <description brief="Qt property browser">
+      A property browser framework enabling the user to edit a set of properties.
+    </description>
+    <maintainer>Pierre Willenbrock/pierre.willenbrock@dfki.de</maintainer>
+    <copyright>
+       Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+       DFKI/robotik@dfki.de
+    </copyright>
+    <license>BSD</license>
+    <keywords>
+     <keyword>utilities</keyword>
+     <keyword>ui</keyword>
+    </keywords>
+    <stage>-1</stage>
+    <depend package="qt4" optional="1" />
+    <depend package="qt5" optional="1" />
+</package>

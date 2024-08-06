@@ -39,7 +39,27 @@
 
 
 #include "qteditorfactory.h"
+#include "qteditorfactory_p.h"
 #include "qtpropertybrowserutils_p.h"
+#if QT_VERSION < 0x050000
+#include <QtGui/QSpinBox>
+#include <QtGui/QScrollBar>
+#include <QtGui/QLabel>
+#include <QtGui/QComboBox>
+#include <QtGui/QAbstractItemView>
+#include <QtGui/QLineEdit>
+#include <QtGui/QDateTimeEdit>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QMenu>
+#include <QtGui/QKeyEvent>
+#include <QtGui/QApplication>
+#include <QtGui/QToolButton>
+#include <QtGui/QColorDialog>
+#include <QtGui/QFontDialog>
+#include <QtGui/QSpacerItem>
+#include <QtGui/QStyleOption>
+#include <QtGui/QPainter>
+#else
 #include <QSpinBox>
 #include <QScrollBar>
 #include <QComboBox>
@@ -57,6 +77,7 @@
 #include <QSpacerItem>
 #include <QStyleOption>
 #include <QPainter>
+#endif
 #include <QtCore/QMap>
 
 #if defined(Q_CC_MSVC)
@@ -905,7 +926,12 @@ public:
 
     void slotPropertyChanged(QtProperty *property, const QString &value);
     void slotRegExpChanged(QtProperty *property, const QRegExp &regExp);
+#if QT_VERSION < 0x050000
+    void slotEditFinished();
+    void slotEchoModeChanged(QtProperty *property, int echoMode);
+#else
     void slotSetValue(const QString &value);
+#endif
 };
 
 void QtLineEditFactoryPrivate::slotPropertyChanged(QtProperty *property,
@@ -948,7 +974,33 @@ void QtLineEditFactoryPrivate::slotRegExpChanged(QtProperty *property,
     }
 }
 
+#if QT_VERSION < 0x050000
+void QtLineEditFactoryPrivate::slotEchoModeChanged(QtProperty *property, int echoMode)
+{
+    if (!m_createdEditors.contains(property))
+        return;
+
+    QtStringPropertyManager *manager = q_ptr->propertyManager(property);
+    if (!manager)
+        return;
+
+    QListIterator<QLineEdit *> itEditor(m_createdEditors[property]);
+    while (itEditor.hasNext()) {
+        QLineEdit *editor = itEditor.next();
+        editor->blockSignals(true);
+        editor->setEchoMode((EchoMode)echoMode);
+        editor->blockSignals(false);
+    }
+
+
+}
+#endif
+
+#if QT_VERSION < 0x050000
+void QtLineEditFactoryPrivate::slotEditFinished()
+#else
 void QtLineEditFactoryPrivate::slotSetValue(const QString &value)
+#endif
 {
     QObject *object = q_ptr->sender();
     const QMap<QLineEdit *, QtProperty *>::ConstIterator ecend = m_editorToProperty.constEnd();
@@ -958,7 +1010,11 @@ void QtLineEditFactoryPrivate::slotSetValue(const QString &value)
             QtStringPropertyManager *manager = q_ptr->propertyManager(property);
             if (!manager)
                 return;
+#if QT_VERSION < 0x050000
+            manager->setValue(property, itEditor.key()->text());
+#else
             manager->setValue(property, value);
+#endif
             return;
         }
 }
@@ -1003,6 +1059,10 @@ void QtLineEditFactory::connectPropertyManager(QtStringPropertyManager *manager)
                 this, SLOT(slotPropertyChanged(QtProperty *, const QString &)));
     connect(manager, SIGNAL(regExpChanged(QtProperty *, const QRegExp &)),
                 this, SLOT(slotRegExpChanged(QtProperty *, const QRegExp &)));
+#if QT_VERSION < 0x050000
+    connect(manager, SIGNAL(echoModeChanged(QtProperty*, int)),
+            this, SLOT(slotEchoModeChanged(QtProperty *, int)));
+#endif
 }
 
 /*!
@@ -1015,6 +1075,9 @@ QWidget *QtLineEditFactory::createEditor(QtStringPropertyManager *manager,
 {
 
     QLineEdit *editor = d_ptr->createEditor(property, parent);
+#if QT_VERSION < 0x050000
+    editor->setEchoMode((EchoMode)manager->echoMode(property));
+#endif
     QRegExp regExp = manager->regExp(property);
     if (regExp.isValid()) {
         QValidator *validator = new QRegExpValidator(regExp, editor);
@@ -1022,8 +1085,13 @@ QWidget *QtLineEditFactory::createEditor(QtStringPropertyManager *manager,
     }
     editor->setText(manager->value(property));
 
+#if QT_VERSION < 0x050000
+    connect(editor, SIGNAL(editingFinished()),
+                this, SLOT(slotEditFinished()));
+#else
     connect(editor, SIGNAL(textEdited(const QString &)),
                 this, SLOT(slotSetValue(const QString &)));
+#endif
     connect(editor, SIGNAL(destroyed(QObject *)),
                 this, SLOT(slotEditorDestroyed(QObject *)));
     return editor;
@@ -1040,6 +1108,10 @@ void QtLineEditFactory::disconnectPropertyManager(QtStringPropertyManager *manag
                 this, SLOT(slotPropertyChanged(QtProperty *, const QString &)));
     disconnect(manager, SIGNAL(regExpChanged(QtProperty *, const QRegExp &)),
                 this, SLOT(slotRegExpChanged(QtProperty *, const QRegExp &)));
+#if QT_VERSION < 0x050000
+    disconnect(manager, SIGNAL(echoModeChanged(QtProperty*,int)),
+                this, SLOT(slotEchoModeChanged(QtProperty *, int)));
+#endif
 }
 
 // QtDateEditFactory
@@ -1511,34 +1583,6 @@ void QtKeySequenceEditorFactory::disconnectPropertyManager(QtKeySequenceProperty
 }
 
 // QtCharEdit
-
-class QtCharEdit : public QWidget
-{
-    Q_OBJECT
-public:
-    QtCharEdit(QWidget *parent = 0);
-
-    QChar value() const;
-    bool eventFilter(QObject *o, QEvent *e);
-public Q_SLOTS:
-    void setValue(const QChar &value);
-Q_SIGNALS:
-    void valueChanged(const QChar &value);
-protected:
-    void focusInEvent(QFocusEvent *e);
-    void focusOutEvent(QFocusEvent *e);
-    void keyPressEvent(QKeyEvent *e);
-    void keyReleaseEvent(QKeyEvent *e);
-    void paintEvent(QPaintEvent *);
-    bool event(QEvent *e);
-private slots:
-    void slotClearChar();
-private:
-    void handleKeyEvent(QKeyEvent *e);
-
-    QChar m_value;
-    QLineEdit *m_lineEdit;
-};
 
 QtCharEdit::QtCharEdit(QWidget *parent)
     : QWidget(parent),  m_lineEdit(new QLineEdit(this))
@@ -2142,33 +2186,6 @@ void QtCursorEditorFactory::disconnectPropertyManager(QtCursorPropertyManager *m
 
 // QtColorEditWidget
 
-class QtColorEditWidget : public QWidget {
-    Q_OBJECT
-
-public:
-    QtColorEditWidget(QWidget *parent);
-
-    bool eventFilter(QObject *obj, QEvent *ev);
-
-public Q_SLOTS:
-    void setValue(const QColor &value);
-
-Q_SIGNALS:
-    void valueChanged(const QColor &value);
-
-protected:
-    void paintEvent(QPaintEvent *);
-
-private Q_SLOTS:
-    void buttonClicked();
-
-private:
-    QColor m_color;
-    QLabel *m_pixmapLabel;
-    QLabel *m_label;
-    QToolButton *m_button;
-};
-
 QtColorEditWidget::QtColorEditWidget(QWidget *parent) :
     QWidget(parent),
     m_pixmapLabel(new QLabel),
@@ -2350,33 +2367,6 @@ void QtColorEditorFactory::disconnectPropertyManager(QtColorPropertyManager *man
 }
 
 // QtFontEditWidget
-
-class QtFontEditWidget : public QWidget {
-    Q_OBJECT
-
-public:
-    QtFontEditWidget(QWidget *parent);
-
-    bool eventFilter(QObject *obj, QEvent *ev);
-
-public Q_SLOTS:
-    void setValue(const QFont &value);
-
-Q_SIGNALS:
-    void valueChanged(const QFont &value);
-
-protected:
-    void paintEvent(QPaintEvent *);
-
-private Q_SLOTS:
-    void buttonClicked();
-
-private:
-    QFont m_font;
-    QLabel *m_pixmapLabel;
-    QLabel *m_label;
-    QToolButton *m_button;
-};
 
 QtFontEditWidget::QtFontEditWidget(QWidget *parent) :
     QWidget(parent),
@@ -2576,4 +2566,4 @@ QT_END_NAMESPACE
 #endif
 
 #include "moc_qteditorfactory.cpp"
-#include "qteditorfactory.moc"
+#include "moc_qteditorfactory_p.cpp"

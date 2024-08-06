@@ -39,12 +39,24 @@
 
 
 #include "qtpropertymanager.h"
+#include "qtpropertymanager_p.h"
 #include "qtpropertybrowserutils_p.h"
 #include <QtCore/QDateTime>
 #include <QtCore/QLocale>
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
 #include <QtCore/QMetaEnum>
+#if QT_VERSION < 0x050000
+#include <QtGui/QApplication>
+#include <QtGui/QCheckBox>
+#include <QtGui/QFontDatabase>
+#include <QtGui/QIcon>
+#include <QtGui/QLabel>
+#include <QtGui/QLineEdit>
+#include <QtGui/QPainter>
+#include <QtGui/QStyle>
+#include <QtGui/QStyleOption>
+#else
 #include <QIcon>
 #include <QFontDatabase>
 #include <QStyleOption>
@@ -53,6 +65,7 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QApplication>
+#endif
 
 #include <limits.h>
 #include <float.h>
@@ -65,6 +78,76 @@
 QT_BEGIN_NAMESPACE
 #endif
 
+#if QT_VERSION < 0x050000
+template <class PrivateData, class Value>
+static void setSimpleMinimumData(PrivateData *data, const Value &minVal)
+{
+    data->minVal = minVal;
+    if (data->maxVal < data->minVal)
+        data->maxVal = data->minVal;
+
+    if (data->val < data->minVal)
+        data->val = data->minVal;
+}
+
+template <class PrivateData, class Value>
+static void setSimpleMaximumData(PrivateData *data, const Value &maxVal)
+{
+    data->maxVal = maxVal;
+    if (data->minVal > data->maxVal)
+        data->minVal = data->maxVal;
+
+    if (data->val > data->maxVal)
+        data->val = data->maxVal;
+}
+
+template <class PrivateData, class Value>
+static void setSizeMinimumData(PrivateData *data, const Value &newMinVal)
+{
+    data->minVal = newMinVal;
+    if (data->maxVal.width() < data->minVal.width())
+        data->maxVal.setWidth(data->minVal.width());
+    if (data->maxVal.height() < data->minVal.height())
+        data->maxVal.setHeight(data->minVal.height());
+
+    if (data->val.width() < data->minVal.width())
+        data->val.setWidth(data->minVal.width());
+    if (data->val.height() < data->minVal.height())
+        data->val.setHeight(data->minVal.height());
+}
+
+template <class PrivateData, class Value>
+static void setSizeMaximumData(PrivateData *data, const Value &newMaxVal)
+{
+    data->maxVal = newMaxVal;
+    if (data->minVal.width() > data->maxVal.width())
+        data->minVal.setWidth(data->maxVal.width());
+    if (data->minVal.height() > data->maxVal.height())
+        data->minVal.setHeight(data->maxVal.height());
+
+    if (data->val.width() > data->maxVal.width())
+        data->val.setWidth(data->maxVal.width());
+    if (data->val.height() > data->maxVal.height())
+        data->val.setHeight(data->maxVal.height());
+}
+
+template <class SizeValue>
+static SizeValue qBoundSize(const SizeValue &minVal, const SizeValue &val, const SizeValue &maxVal)
+{
+    SizeValue croppedVal = val;
+    if (minVal.width() > val.width())
+        croppedVal.setWidth(minVal.width());
+    else if (maxVal.width() < val.width())
+        croppedVal.setWidth(maxVal.width());
+
+    if (minVal.height() > val.height())
+        croppedVal.setHeight(minVal.height());
+    else if (maxVal.height() < val.height())
+        croppedVal.setHeight(maxVal.height());
+
+    return croppedVal;
+}
+#else
 template <class PrivateData, class Value>
 static void setSimpleMinimumData(PrivateData *data, const Value &minVal)
 {
@@ -134,6 +217,7 @@ static SizeValue qBoundSize(const SizeValue &minVal, const SizeValue &val, const
     return croppedVal;
 }
 
+#endif
 // Match the exact signature of qBound for VS 6.
 QSize qBound(QSize minVal, QSize val, QSize maxVal)
 {
@@ -192,7 +276,11 @@ static Value getData(const QMap<const QtProperty *, PrivateData> &propertyMap,
             const QtProperty *property, const Value &defaultValue = Value())
 {
     typedef QMap<const QtProperty *, PrivateData> PropertyToData;
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyToData::const_iterator PropertyToDataConstIterator;
+#else
     typedef typename PropertyToData::const_iterator PropertyToDataConstIterator;
+#endif
     const PropertyToDataConstIterator it = propertyMap.constFind(property);
     if (it == propertyMap.constEnd())
         return defaultValue;
@@ -228,7 +316,11 @@ static void setSimpleValue(QMap<const QtProperty *, Value> &propertyMap,
             QtProperty *property, const Value &val)
 {
     typedef QMap<const QtProperty *, Value> PropertyToData;
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyToData::iterator PropertyToDataIterator;
+#else
     typedef typename PropertyToData::iterator PropertyToDataIterator;
+#endif
     const PropertyToDataIterator it = propertyMap.find(property);
     if (it == propertyMap.end())
         return;
@@ -249,9 +341,17 @@ static void setValueInRange(PropertyManager *manager, PropertyManagerPrivate *ma
             QtProperty *property, const Value &val,
             void (PropertyManagerPrivate::*setSubPropertyValue)(QtProperty *, ValueChangeParameter))
 {
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyManagerPrivate::Data PrivateData;
+#else
     typedef typename PropertyManagerPrivate::Data PrivateData;
+#endif
     typedef QMap<const QtProperty *, PrivateData> PropertyToData;
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyToData::iterator PropertyToDataIterator;
+#else
     typedef typename PropertyToData::iterator PropertyToDataIterator;
+#endif
     const PropertyToDataIterator it = managerPrivate->m_values.find(property);
     if (it == managerPrivate->m_values.end())
         return;
@@ -284,9 +384,17 @@ static void setBorderValues(PropertyManager *manager, PropertyManagerPrivate *ma
             void (PropertyManagerPrivate::*setSubPropertyRange)(QtProperty *,
                     ValueChangeParameter, ValueChangeParameter, ValueChangeParameter))
 {
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyManagerPrivate::Data PrivateData;
+#else
     typedef typename PropertyManagerPrivate::Data PrivateData;
+#endif
     typedef QMap<const QtProperty *, PrivateData> PropertyToData;
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyToData::iterator PropertyToDataIterator;
+#else
     typedef typename PropertyToData::iterator PropertyToDataIterator;
+#endif
     const PropertyToDataIterator it = managerPrivate->m_values.find(property);
     if (it == managerPrivate->m_values.end())
         return;
@@ -329,7 +437,11 @@ static void setBorderValue(PropertyManager *manager, PropertyManagerPrivate *man
                     ValueChangeParameter, ValueChangeParameter, ValueChangeParameter))
 {
     typedef QMap<const QtProperty *, PrivateData> PropertyToData;
+#if QT_VERSION < 0x050000
+    typedef Q_TYPENAME PropertyToData::iterator PropertyToDataIterator;
+#else
     typedef typename PropertyToData::iterator PropertyToDataIterator;
+#endif
     const PropertyToDataIterator it = managerPrivate->m_values.find(property);
     if (it == managerPrivate->m_values.end())
         return;
@@ -382,16 +494,6 @@ static void setMaximumValue(PropertyManager *manager, PropertyManagerPrivate *ma
             propertyChangedSignal, valueChangedSignal, rangeChangedSignal,
             property, &PropertyManagerPrivate::Data::maximumValue, &PropertyManagerPrivate::Data::setMaximumValue, maxVal, setSubPropertyRange);
 }
-
-class QtMetaEnumWrapper : public QObject
-{
-    Q_OBJECT
-    Q_PROPERTY(QSizePolicy::Policy policy READ policy)
-public:
-    QSizePolicy::Policy policy() const { return QSizePolicy::Ignored; }
-private:
-    QtMetaEnumWrapper(QObject *parent) : QObject(parent) {}
-};
 
 class QtMetaEnumProvider
 {
@@ -1060,7 +1162,11 @@ QString QtDoublePropertyManager::valueText(const QtProperty *property) const
     const QtDoublePropertyManagerPrivate::PropertyValueMap::const_iterator it = d_ptr->m_values.constFind(property);
     if (it == d_ptr->m_values.constEnd())
         return QString();
+#if QT_VERSION < 0x050000
+    return QLocale::system().toString(it.value().val, 'f', it.value().decimals);
+#else
     return QString::number(it.value().val, 'f', it.value().decimals);
+#endif
 }
 
 /*!
@@ -1234,6 +1340,9 @@ public:
         }
         QString val;
         QRegExp regExp;
+#if QT_VERSION < 0x050000
+        int echoMode;
+#endif
     };
 
     typedef QMap<const QtProperty *, Data> PropertyValueMap;
@@ -1325,6 +1434,16 @@ QRegExp QtStringPropertyManager::regExp(const QtProperty *property) const
     return getData<QRegExp>(d_ptr->m_values, &QtStringPropertyManagerPrivate::Data::regExp, property, QRegExp());
 }
 
+#if QT_VERSION < 0x050000
+/*!
+    \reimp
+*/
+EchoMode QtStringPropertyManager::echoMode(const QtProperty *property) const
+{
+    return (EchoMode)getData<int>(d_ptr->m_values, &QtStringPropertyManagerPrivate::Data::echoMode, property, 0);
+}
+
+#endif
 /*!
     \reimp
 */
@@ -1333,9 +1452,29 @@ QString QtStringPropertyManager::valueText(const QtProperty *property) const
     const QtStringPropertyManagerPrivate::PropertyValueMap::const_iterator it = d_ptr->m_values.constFind(property);
     if (it == d_ptr->m_values.constEnd())
         return QString();
+#if QT_VERSION < 0x050000
+
+#endif
     return it.value().val;
 }
 
+#if QT_VERSION < 0x050000
+/*!
+    \reimp
+*/
+QString QtStringPropertyManager::displayText(const QtProperty *property) const
+{
+    const QtStringPropertyManagerPrivate::PropertyValueMap::const_iterator it = d_ptr->m_values.constFind(property);
+    if (it == d_ptr->m_values.constEnd())
+        return QString();
+
+    QLineEdit edit;
+    edit.setEchoMode((EchoMode)it.value().echoMode);
+    edit.setText(it.value().val);
+    return edit.displayText();
+}
+
+#endif
 /*!
     \fn void QtStringPropertyManager::setValue(QtProperty *property, const QString &value)
 
@@ -1391,6 +1530,26 @@ void QtStringPropertyManager::setRegExp(QtProperty *property, const QRegExp &reg
     emit regExpChanged(property, data.regExp);
 }
 
+#if QT_VERSION < 0x050000
+void QtStringPropertyManager::setEchoMode(QtProperty *property, EchoMode echoMode)
+{
+    const QtStringPropertyManagerPrivate::PropertyValueMap::iterator it = d_ptr->m_values.find(property);
+    if (it == d_ptr->m_values.end())
+        return;
+
+    QtStringPropertyManagerPrivate::Data data = it.value();
+
+    if (data.echoMode == echoMode)
+        return;
+
+    data.echoMode = echoMode;
+    it.value() = data;
+
+    emit propertyChanged(property);
+    emit echoModeChanged(property, data.echoMode);
+}
+
+#endif
 /*!
     \reimp
 */
@@ -4809,7 +4968,11 @@ void QtEnumPropertyManager::setValue(QtProperty *property, int val)
 
     \sa enumNames(), enumNamesChanged()
 */
+#if QT_VERSION < 0x050000
+void QtEnumPropertyManager::setEnumNames(QtProperty *property, QStringList enumNames)
+#else
 void QtEnumPropertyManager::setEnumNames(QtProperty *property, const QStringList &enumNames)
+#endif
 {
     const QtEnumPropertyManagerPrivate::PropertyValueMap::iterator it = d_ptr->m_values.find(property);
     if (it == d_ptr->m_values.end())
@@ -4817,22 +4980,60 @@ void QtEnumPropertyManager::setEnumNames(QtProperty *property, const QStringList
 
     QtEnumPropertyManagerPrivate::Data data = it.value();
 
+#if QT_VERSION < 0x050000
+    QString oldValue, currentValue;
+    if (data.val != -1)
+        oldValue = data.enumNames.at(data.val);
+
+    int newVal = data.val;
+    if (enumNames.empty())
+        newVal = -1;
+    else
+    {
+        currentValue = enumNames.front();
+        enumNames.pop_front();
+        newVal = enumNames.indexOf(currentValue);
+        if (newVal == -1)
+        {
+            newVal = 0;
+            enumNames.push_front(currentValue);
+        }
+    }
+#else
     if (data.enumNames == enumNames)
         return;
+#endif
 
+#if QT_VERSION < 0x050000
+    bool updatedNames = (data.enumNames != enumNames);
+    bool updatedValue = (oldValue != currentValue);
+#endif
     data.enumNames = enumNames;
+#if QT_VERSION < 0x050000
+    data.val = newVal;
+#else
 
     data.val = -1;
 
     if (enumNames.count() > 0)
         data.val = 0;
 
+#endif
     it.value() = data;
 
+#if QT_VERSION < 0x050000
+    if (updatedNames)
+        emit enumNamesChanged(property, data.enumNames);
+    if (updatedValue)
+        emit valueChanged(property, data.val);
+    if (updatedNames || updatedValue)
+        emit propertyChanged(property);
+#else
     emit enumNamesChanged(property, data.enumNames);
 
     emit propertyChanged(property);
     emit valueChanged(property, data.val);
+#endif
 }
 
 /*!
@@ -6422,4 +6623,4 @@ QT_END_NAMESPACE
 #endif
 
 #include "moc_qtpropertymanager.cpp"
-#include "qtpropertymanager.moc"
+#include "moc_qtpropertymanager_p.cpp"

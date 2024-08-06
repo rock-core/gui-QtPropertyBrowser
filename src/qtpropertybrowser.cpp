@@ -240,6 +240,7 @@ QString QtProperty::propertyName() const
     return d_ptr->m_name;
 }
 
+#if QT_VERSION >= 0x050000
 /*!
     Returns the property's id.
 
@@ -249,6 +250,7 @@ QString QtProperty::propertyId() const
 {
     return d_ptr->m_id;
 }
+#endif
 
 /*!
     Returns whether the property is enabled.
@@ -306,6 +308,20 @@ QString QtProperty::valueText() const
     return d_ptr->m_manager->valueText(this);
 }
 
+#if QT_VERSION < 0x050000
+/*!
+    Returns the display text according to the echo-mode set on the editor.
+
+    When the editor is a QLineEdit, this will return a string equal to what
+    is displayed.
+
+    \sa QtAbstractPropertyManager::valueText()
+*/
+QString QtProperty::displayText() const
+{
+    return d_ptr->m_manager->displayText(this);
+}
+#else
 /*!
     Returns True if this property is equal to \a otherProperty
 
@@ -321,6 +337,7 @@ bool QtProperty::compare(QtProperty* otherProperty)const
           && this->isEnabled() == otherProperty->isEnabled()
           && this->isModified() == otherProperty->isModified());
 }
+#endif
 
 /*!
     Sets the property's tool tip to the given \a text.
@@ -380,6 +397,7 @@ void QtProperty::setPropertyName(const QString &text)
     propertyChanged();
 }
 
+#if QT_VERSION >= 0x050000
 /*!
     \fn void QtProperty::setPropertyId(const QString &id)
 
@@ -394,6 +412,7 @@ void QtProperty::setPropertyId(const QString &text)
 
     d_ptr->m_id = text;
 }
+#endif
 
 /*!
     Enables or disables the property according to the passed \a enable value.
@@ -423,6 +442,7 @@ void QtProperty::setModified(bool modified)
     propertyChanged();
 }
 
+#if QT_VERSION >= 0x050000
 /*!
     Returns whether the property is sub property.
 */
@@ -430,6 +450,7 @@ bool QtProperty::isSubProperty()const
 {
   return d_ptr->m_parentItems.count();
 }
+#endif
 
 /*!
     Appends the given \a property to this property's subproperties.
@@ -767,6 +788,37 @@ QString QtAbstractPropertyManager::valueText(const QtProperty *property) const
     return QString();
 }
 
+#if QT_VERSION < 0x050000
+/*!
+    Returns a string representing the current state of the given \a
+    property.
+
+    The default implementation of this function returns an empty
+    string.
+
+    \sa QtProperty::valueText()
+*/
+QString QtAbstractPropertyManager::displayText(const QtProperty *property) const
+{
+    Q_UNUSED(property)
+    return QString();
+}
+
+/*!
+    Returns the echo mode representing the current state of the given \a
+    property.
+
+    The default implementation of this function returns QLineEdit::Normal.
+
+    \sa QtProperty::valueText()
+*/
+EchoMode QtAbstractPropertyManager::echoMode(const QtProperty *property) const
+{
+    Q_UNUSED(property)
+    return QLineEdit::Normal;
+}
+#endif
+
 /*!
     Creates a property with the given \a name which then is owned by this manager.
 
@@ -786,6 +838,7 @@ QtProperty *QtAbstractPropertyManager::addProperty(const QString &name)
     return property;
 }
 
+#if QT_VERSION >= 0x050000
 /*!
     Return the QtProperty object matching \a id or Null if any.
 
@@ -802,6 +855,7 @@ QtProperty * QtAbstractPropertyManager::qtProperty(const QString &id)const
     }
   return 0;
 }
+#endif
 
 /*!
     Creates a property.
@@ -1874,14 +1928,18 @@ QtBrowserItem *QtAbstractPropertyBrowser::insertProperty(QtProperty *property,
     QList<QtProperty *> pendingList = properties();
     int pos = 0;
     int newPos = 0;
+#if QT_VERSION >= 0x050000
     QtProperty *properAfterProperty = 0;
+#endif
     while (pos < pendingList.count()) {
         QtProperty *prop = pendingList.at(pos);
         if (prop == property)
             return 0;
         if (prop == afterProperty) {
             newPos = pos + 1;
+#if QT_VERSION >= 0x050000
             properAfterProperty = afterProperty;
+#endif
         }
         pos++;
     }
@@ -1891,7 +1949,9 @@ QtBrowserItem *QtAbstractPropertyBrowser::insertProperty(QtProperty *property,
     d_ptr->insertSubTree(property, 0);
 
     d_ptr->m_subItems.insert(newPos, property);
+#if QT_VERSION >= 0x050000
     //propertyInserted(property, 0, properAfterProperty);
+#endif
     return topLevelItem(property);
 }
 
