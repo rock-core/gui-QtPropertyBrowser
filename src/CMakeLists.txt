@@ -23,6 +23,7 @@ file(GLOB _IMPL_HDRS *.h)
 file(GLOB _PUBLIC_HDRS Qt*)
 
 set(_UI_FORMS
+  ""
   )
 
 set(_RESOURCES

@@ -31,8 +31,8 @@ if(Qt4_FOUND)
 
   set(TARGET_NAME ${QT4_TARGET_NAME})
   set(PKGCONFIG_REQUIRES QtCore QtGui)
-  set(PKGCONFIG_LIBS )
-  set(PKGCONFIG_CFLAGS )
+  set(PKGCONFIG_LIBS "")
+  set(PKGCONFIG_CFLAGS "")
   configure_package_config_file(
     ${CMAKE_SOURCE_DIR}/cmake/${QT4_TARGET_NAME}.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/${QT4_TARGET_NAME}.pc
@@ -72,8 +72,8 @@ if(Qt5_FOUND)
 
   set(TARGET_NAME ${QT5_TARGET_NAME})
   set(PKGCONFIG_REQUIRES Qt5Core Qt5Gui Qt5Widgets)
-  set(PKGCONFIG_LIBS )
-  set(PKGCONFIG_CFLAGS )
+  set(PKGCONFIG_LIBS "")
+  set(PKGCONFIG_CFLAGS "")
   configure_package_config_file(
     ${CMAKE_SOURCE_DIR}/cmake/${QT5_TARGET_NAME}.pc.in
     ${CMAKE_CURRENT_BINARY_DIR}/${QT5_TARGET_NAME}.pc
